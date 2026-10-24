@@ -1208,6 +1208,18 @@ showMsg(`<p class='msg-title'>GAME OVER</p><p>Keine Herzen mehr. Du kannst beim 
 { label:'Level neu starten', ghost:true, on:() => startLevel(L.i) },
 { label:'Zur Übersicht', ghost:true, on:showTitle } ]);
 }
+const FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSf7ciZZLjFfZPF-zEP9TRuFWIJCL35OnvRsfeolafO762440A/formResponse';
+function sendScore(){ // schickt das Ergebnis an das Google-Formular der Lehrperson
+try {
+const body = new URLSearchParams();
+body.append('entry.290371893', (save.name || '').trim() || '(ohne Name)');
+body.append('entry.1561840988', `${L.c.code} · L${L.c.diff} ${L.c.name}`);
+body.append('entry.2059420787', String(L.score));
+body.append('entry.988968341', String(L.wrong));
+body.append('entry.1713762866', String(starsFor(L)));
+fetch(FORM_URL, { method:'POST', mode:'no-cors', body }).catch(() => {});
+} catch (e) {}
+}
 function starsFor(lv){ const r = lv.total ? lv.firstTry / lv.total : 0; return r >= 0.85 ? 3 : r >= 0.6 ? 2 : 1; }
 function starHTML(n){ return [0,1,2].map(i => i < n ? '★' : '<span class=off>★</span>').join(''); }
 function showLevelDone(){
@@ -1219,6 +1231,7 @@ if (!prev || L.score > prev.score) save.best[L.i] = { score:L.score, stars:Math.
 else if (st > prev.stars) prev.stars = st;
 save.unlocked = Math.max(save.unlocked, Math.min(LEVELS.length - 1, L.i + 1));
 persist();
+sendScore();
 const last = L.i === LEVELS.length - 1, chapEnd = L.c.diff === 3;
 const nm = save.name ? `, ${escapeHTML(save.name)}` : '';
 showMsg(`<p class='msg-title'>${last ? 'ALLE 9 LEVEL GESCHAFFT!' : chapEnd ? 'KAPITEL ' + L.c.code + ' GESCHAFFT!' : L.c.code + ' · LEVEL ' + L.c.diff + ' GESCHAFFT!'}</p>
@@ -1260,13 +1273,13 @@ b.innerHTML = `<span class='code'>${lv.code} · LEVEL ${lv.diff} ${'●'.repeat(
 b.querySelector('.nm').textContent = (open ? '' : '🔒 ') + lv.name;
 b.querySelector('.tp').textContent = lv.topic;
 b.querySelector('.st').innerHTML = best ? `${starHTML(best.stars)} · ${best.score} P.` : (open ? 'Noch nicht gespielt' : 'Zuerst das Level davor schaffen');
-b.addEventListener('click', () => { snd('open'); startLevel(i); });
+b.addEventListener('click', () => { if (!save.name){ $('nameHint').hidden = false; $('nameInput').focus(); return; } snd('open'); startLevel(i); });
 box.appendChild(b);
 });
 $('ovTitle').hidden = false;
 }
 const nameIn = $('nameInput'); nameIn.value = save.name || '';
-nameIn.addEventListener('input', () => { save.name = nameIn.value.trim(); persist(); });
+nameIn.addEventListener('input', () => { save.name = nameIn.value.trim(); persist(); if (save.name) $('nameHint').hidden = true; });
 const chkS = $('chkSound'); chkS.checked = !!save.sound; chkS.addEventListener('change', () => { save.sound = chkS.checked; persist(); if (save.sound) snd('coin'); });
 const chkU = $('chkUnlock'); chkU.checked = !!save.allUnlocked; chkU.addEventListener('change', () => { save.allUnlocked = chkU.checked; persist(); showTitle(); });
 /* ================= Eingabe ================= */

@@ -50,7 +50,9 @@ border-radius:8px;padding:18px 20px;width:min(720px,100%);max-height:100%;overfl
 label{font-weight:700}
 input[type=text]{font:inherit;font-weight:700;color:var(--ink);background:var(--night2);border:2px solid var(--panel2);border-radius:6px;padding:6px 10px;width:min(280px,100%)}
 input[type=text]:focus-visible,button:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
-.namerow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:12px}
+.namerow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:6px}
+.name-hint{color:var(--gold);font-weight:800}
+.note{margin:0 0 12px;font-size:14px;color:var(--muted)}
 .levels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:4px 0 12px}
 .lvl{font:inherit;text-align:left;color:var(--ink);background:var(--night2);border:3px solid #0b0c1c;border-radius:6px;padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;gap:4px;min-width:0;transition:transform .12s}
 .lvl:hover:not(:disabled){transform:translateY(-3px);border-color:var(--gold)}
@@ -185,7 +187,9 @@ body{font-size:11pt}
 <div class="namerow">
 <label for="nameInput">Dein Name</label>
 <input type="text" id="nameInput" maxlength="24" placeholder="Vorname" autocomplete="off">
+<span class="name-hint" id="nameHint" hidden>Bitte gib zuerst deinen Vornamen ein.</span>
 </div>
+<p class="note">Wenn du ein Level schaffst, sieht deine Lehrperson deinen Vornamen, das Level und deine Punkte.</p>
 <div class="levels" id="levelCards"></div>
 <div class="opts">
 <label><input type="checkbox" id="chkSound"> Ton an</label>
