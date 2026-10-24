@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}</style>
+<title>Propis Zahlen-Abenteuer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Baloo+2:wght@500;600;700;800&display=swap">
+<style>
+/* Layout: one arcade cabinet column — header, 16:9-ish game frame with overlays, touch pad, help, quiet footer. Single dark arcade look. */
+:root{
+--night:#15172e; --night2:#1d2042; --panel:#262a55; --panel2:#30356a;
+--ink:#f6f3ff; --muted:#aeb0dc; --gold:#ffc83d; --gold-dark:#b77d00;
+--orange:#ff7a1a; --teal:#3ad1c4; --good:#3ddc84; --bad:#ff5470;
+--f-display:"Press Start 2P", ui-monospace, "Courier New", monospace;
+--f-body:"Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{background:var(--night)}
+body{
+margin:0; color:var(--ink); font-family:var(--f-body); font-size:17px; line-height:1.45;
+background:
+radial-gradient(circle at 20% -10%, #2b2f66 0, transparent 55%),
+repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,255,255,.018) 3px 4px),
+var(--night);
+min-height:100%;
+}
+.wrap{max-width:1000px;margin:0 auto;padding-block:18px 28px;
+padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));
+display:flex;flex-direction:column;gap:14px}
+header.top{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 16px}
+header.top h1{font-family:var(--f-display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-spacing:.04em;color:var(--gold);text-shadow:3px 3px 0 #7a3d00;text-wrap:balance}
+header.top p{margin:0;color:var(--muted);font-weight:600;font-size:15px}
+.frame{position:relative;width:100%;aspect-ratio:960/520;max-width:100%;border-radius:10px;overflow:hidden;
+box-shadow:0 0 0 4px #0b0c1c, 0 0 0 8px #3a3f7a, 0 18px 40px rgba(0,0,0,.5);background:#000}
+canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:14px;
+background:rgba(12,13,32,.72);backdrop-filter:blur(2px);overflow:auto;z-index:5}
+.card{background:var(--panel);border:3px solid #0b0c1c;box-shadow:0 0 0 3px var(--panel2), 6px 6px 0 3px rgba(0,0,0,.45);
+border-radius:8px;padding:18px 20px;width:min(720px,100%);max-height:100%;overflow:auto}
+.logo{font-family:var(--f-display);font-size:clamp(18px,3.4vw,30px);color:var(--gold);text-shadow:4px 4px 0 #7a3d00;margin:0 0 6px;line-height:1.3}
+.logo small{display:block;font-size:.42em;color:var(--teal);text-shadow:none;margin-top:6px;letter-spacing:.06em}
+.lead{margin:6px 0 12px;color:var(--ink)}
+.qb{display:inline-grid;place-items:center;width:1.5em;height:1.5em;background:var(--gold);color:#fff;border:2px solid var(--gold-dark);border-radius:3px;text-shadow:1px 1px 0 #7a3d00;font-weight:800;line-height:1}
+label{font-weight:700}
+input[type=text]{font:inherit;font-weight:700;color:var(--ink);background:var(--night2);border:2px solid var(--panel2);border-radius:6px;padding:6px 10px;width:min(280px,100%)}
+input[type=text]:focus-visible,button:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.namerow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:12px}
+.levels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:4px 0 12px}
+.lvl{font:inherit;text-align:left;color:var(--ink);background:var(--night2);border:3px solid #0b0c1c;border-radius:6px;padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;gap:4px;min-width:0;transition:transform .12s}
+.lvl:hover:not(:disabled){transform:translateY(-3px);border-color:var(--gold)}
+.lvl:disabled{opacity:.45;cursor:not-allowed}
+.lvl .code{font-family:var(--f-display);font-size:9px;color:var(--teal);line-height:1.5}
+.lvl .nm{font-weight:800;font-size:17px;line-height:1.15}
+.lvl .tp{font-size:14px;color:var(--muted)}
+.lvl .st{font-size:14px;color:var(--gold);font-weight:700}
+.opts{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;color:var(--muted)}
+.opts label{font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer}
+.btn{font:inherit;font-weight:800;border:3px solid #0b0c1c;border-radius:6px;padding:8px 16px;cursor:pointer;color:#1b1300;background:var(--gold);box-shadow:0 4px 0 #0b0c1c}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #0b0c1c}
+.btn.ghost{background:var(--panel2);color:var(--ink)}
+.btnrow{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+/* Question */
+.q-card{width:min(680px,100%)}
+.q-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.q-tag{font-family:var(--f-display);font-size:10px;color:#1b1300;background:var(--teal);padding:5px 8px;border-radius:4px;letter-spacing:.04em}
+.q-hearts{color:var(--bad);font-size:20px;letter-spacing:2px}
+.q-text{font-size:20px;font-weight:700;margin:4px 0 10px;text-wrap:pretty}
+.wt-wrap{overflow-x:auto;margin:0 0 12px}
+table.wt{border-collapse:collapse;font-variant-numeric:tabular-nums;font-weight:700;min-width:240px}
+table.wt th{background:var(--panel2);color:var(--teal);font-size:14px;text-transform:uppercase;letter-spacing:.06em;padding:4px 14px;border:2px solid #0b0c1c}
+table.wt td{padding:4px 14px;border:2px solid #0b0c1c;background:var(--night2);text-align:center;font-size:18px}
+table.wt td.miss{color:var(--gold);background:#3a3000}
+.answers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ans{font:inherit;font-weight:700;font-size:18px;text-align:left;color:var(--ink);background:var(--night2);border:3px solid #0b0c1c;border-radius:6px;padding:8px 12px;cursor:pointer;display:flex;gap:10px;align-items:center;min-width:0}
+.ans .k{font-family:var(--f-display);font-size:11px;color:#1b1300;background:var(--gold);border-radius:3px;padding:4px 6px;flex:none}
+.ans:hover:not(:disabled){border-color:var(--gold)}
+.ans.ok{background:#124d2f;border-color:var(--good)}
+.ans.no{background:#5a1424;border-color:var(--bad)}
+.ans:disabled{cursor:default}
+.feedback{margin-top:12px;padding:10px 12px;border-radius:6px;background:var(--night2);border-left:6px solid var(--teal)}
+.feedback.good{border-left-color:var(--good)}
+.feedback.bad{border-left-color:var(--bad)}
+.feedback h3{margin:0 0 4px;font-size:19px}
+.win-power{margin:4px 0 8px;padding:8px 10px;border-radius:6px;background:#3a3000;border:2px solid var(--gold);color:var(--ink)}
+.win-power b{color:var(--gold)}
+.feedback .step{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink)}
+.feedback .step+.step{margin-top:2px}
+.msg-title{font-family:var(--f-display);font-size:clamp(14px,2.6vw,22px);color:var(--gold);margin:0 0 10px;line-height:1.35;text-shadow:3px 3px 0 #7a3d00}
+.stars{font-size:34px;letter-spacing:6px;color:var(--gold)}
+.stars .off{color:#4a4d80}
+.stat{display:grid;grid-template-columns:auto auto;gap:2px 18px;justify-content:start;font-variant-numeric:tabular-nums;font-weight:700}
+.stat span:nth-child(odd){color:var(--muted);font-weight:600}
+.help{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.help div{background:var(--night2);border:2px solid var(--panel2);border-radius:6px;padding:10px 12px;font-size:15px;min-width:0}
+.help h2{font-family:var(--f-display);font-size:10px;color:var(--teal);margin:0 0 6px;letter-spacing:.06em}
+kbd{font-family:var(--f-display);font-size:9px;background:var(--panel2);border:2px solid #0b0c1c;border-radius:3px;padding:2px 5px;color:var(--ink)}
+footer{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.print{font:inherit;font-size:13px;color:var(--muted);background:transparent;border:1px solid var(--panel2);border-radius:999px;padding:4px 14px;cursor:pointer;opacity:.75}
+.print:hover{opacity:1;color:var(--ink)}
+#printArea{display:none}
+#ovQ,#ovMsg,#ovEgg,#ovTitle{position:fixed;z-index:50}
+/* Touch-Steuerung (Handy/Tablet) */
+.frame{container-type:size;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.overlay{touch-action:pan-y}
+.tc{position:absolute;inset:0;pointer-events:none;z-index:4;display:none}
+body.is-touch .tc{display:block}
+.tc>*{pointer-events:auto}
+.tc-pad{position:absolute;left:max(10px, env(safe-area-inset-left, 0px));bottom:max(10px, env(safe-area-inset-bottom, 0px));width:clamp(110px,28cqw,240px);height:clamp(44px,17cqh,96px);border-radius:999px;background:rgba(12,13,32,.4);border:2px solid rgba(255,255,255,.4);display:flex;justify-content:space-between;align-items:center;padding:0 20px;color:rgba(255,255,255,.85);font-size:clamp(18px,7cqh,34px);touch-action:none}
+.tc-pad span{transition:transform .08s}
+.tc-pad[data-dir=l] .tc-l,.tc-pad[data-dir=r] .tc-r{color:var(--gold);transform:scale(1.3)}
+.tc-pad[data-run='1']{border-color:var(--gold)}
+.tc-btns{position:absolute;right:max(10px, env(safe-area-inset-right, 0px));bottom:max(10px, env(safe-area-inset-bottom, 0px));display:flex;gap:14px;align-items:flex-end}
+.tc-b{font:inherit;font-size:clamp(18px,7cqh,34px);width:clamp(46px,17cqh,96px);height:clamp(46px,17cqh,96px);border-radius:50%;border:2px solid rgba(255,255,255,.45);background:rgba(12,13,32,.4);color:#fff;touch-action:none;display:grid;place-items:center;padding:0}
+.tc-shoot{background:rgba(58,209,196,.5);margin-bottom:clamp(18px,9cqh,56px)}
+.tc-jump{background:rgba(255,122,26,.6);width:clamp(52px,20cqh,112px);height:clamp(52px,20cqh,112px)}
+.tc-b.on{transform:scale(.9);filter:brightness(1.35)}
+.tc-top{position:absolute;top:calc(9% + 6px);font:inherit;font-family:var(--f-display);font-size:13px;width:clamp(34px,11cqh,44px);height:clamp(34px,11cqh,44px);border-radius:10px;border:2px solid rgba(255,255,255,.45);background:rgba(12,13,32,.5);color:#fff;touch-action:none;padding:0}
+.tc-pause{right:max(10px, env(safe-area-inset-right, 0px))}
+.tc-full{right:calc(max(10px, env(safe-area-inset-right, 0px)) + clamp(42px,14cqh,54px));font-size:18px;font-family:inherit}
+.frame.full{position:fixed;inset:0;width:100%;height:100%;max-width:none;aspect-ratio:auto;border-radius:0;box-shadow:none;z-index:40}
+.frame.full canvas{object-fit:contain}
+.rotate-hint{display:none;margin:0;padding:8px 12px;border-radius:8px;background:var(--panel);border:2px solid var(--gold);color:var(--ink);font-weight:700;font-size:15px}
+@media (orientation:portrait){ body.is-touch .rotate-hint{display:block} }
+.egg{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;width:min(760px,100%)}
+.ribbon{position:relative;background:linear-gradient(180deg,#ff5470,#d6304f);color:#fff;font-weight:800;font-size:clamp(18px,3vw,28px);line-height:1.25;
+padding:18px 34px;border:3px solid #0b0c1c;box-shadow:0 6px 0 #0b0c1c;text-shadow:2px 2px 0 #7a1328;text-wrap:balance;
+animation:unfurl .7s cubic-bezier(.2,1.4,.4,1) both}
+.ribbon::before,.ribbon::after{content:"";position:absolute;top:16px;width:34px;height:100%;background:#a3203a;border:3px solid #0b0c1c;z-index:-1}
+.ribbon::before{left:-26px;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,35% 50%)}
+.ribbon::after{right:-26px;clip-path:polygon(0 0,100% 0,65% 50%,100% 100%,0 100%)}
+.egg-sub{margin:0;font-family:var(--f-display);font-size:11px;color:var(--gold);letter-spacing:.05em;line-height:1.6}
+@keyframes unfurl{from{transform:scaleX(0) rotate(-3deg);opacity:0}to{transform:scaleX(1) rotate(-1.5deg);opacity:1}}
+@media (max-width:900px){ #ovTitle{position:fixed;z-index:50} }
+@media (max-width:720px){
+.levels{grid-template-columns:1fr}
+.answers{grid-template-columns:1fr}
+.help{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){ .lvl{transition:none} .ribbon{animation:none;transform:rotate(-1.5deg)} }
+@page{size:A4 portrait;margin:15mm}
+@media print{
+html,body{background:#fff!important;color:#000}
+body{font-size:11pt}
+.wrap{display:none!important}
+#printArea{display:block!important;color:#000;font-family:var(--f-body)}
+#printArea h1{font-size:18pt;margin:0 0 4pt}
+#printArea h2{font-size:13pt;margin:14pt 0 6pt}
+#printArea table{border-collapse:collapse;width:100%;font-size:10pt}
+#printArea th,#printArea td{border:1px solid #888;padding:3pt 5pt;text-align:left;vertical-align:top}
+#printArea th{background:#eee}
+#printArea .ok{color:#0a7a3a;font-weight:700}
+#printArea .no{color:#b0102e;font-weight:700}
+#printArea .meta{color:#444}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+<h1>Propis Zahlen-Abenteuer</h1>
+<p>Jump &amp; Run · Mathematik 6.4 · Proportionalität · Klasse 6b</p>
+</header>
+<p class="rotate-hint">📱 Tipp: Gerät quer halten und oben rechts auf ⛶ tippen, dann wird das Spiel gross.</p>
+<div class="frame" id="frame">
+<canvas id="game" width="960" height="520" aria-label="Spielfeld"></canvas>
+<div class="tc" id="tc" aria-hidden="true">
+<div class="tc-pad" id="tcPad"><span class="tc-l">◀</span><span class="tc-r">▶</span></div>
+<div class="tc-btns">
+<button class="tc-b tc-shoot" data-k="shoot" type="button">✦</button>
+<button class="tc-b tc-jump" data-k="jump" type="button">▲</button>
+</div>
+<button class="tc-top tc-full" data-k="full" type="button" aria-label="Vollbild">⛶</button>
+<button class="tc-top tc-pause" data-k="pause" type="button" aria-label="Pause">II</button>
+</div>
+<div class="overlay" id="ovTitle">
+<div class="card">
+<p class="logo">PROPI ∝<small>3 KAPITEL · 9 LEVEL · 6.4.1 · 6.4.2 · 6.4.3</small></p>
+<p class="lead">Hilf dem Roboter Propi durch drei Kapitel mit je drei Leveln, die immer schwieriger werden. Springe von unten gegen die goldenen <span class="qb">∝</span>-Blöcke und löse die Aufgaben. Erst wenn alle Blöcke gelöst sind, öffnet sich das Tor zum Ziel. Unterwegs warten Fressblumen, Feuerbälle und bröckelnde Steine, und Propi kann schiessen. Wer eine Aufgabe beim ersten Versuch richtig löst, gewinnt ein Power-up wie Unbesiegbarkeit oder ein Jetpack. <b>∝</b> ist das Zeichen für «proportional».</p>
+<div class="namerow">
+<label for="nameInput">Dein Name</label>
+<input type="text" id="nameInput" maxlength="24" placeholder="Vorname" autocomplete="off">
+</div>
+<div class="levels" id="levelCards"></div>
+<div class="opts">
+<label><input type="checkbox" id="chkSound"> Ton an</label>
+<label><input type="checkbox" id="chkUnlock"> Alle Level freischalten (Lehrperson)</label>
+</div>
+</div>
+</div>
+<div class="overlay" id="ovQ" hidden>
+<div class="card q-card" role="dialog" aria-modal="true" aria-labelledby="qText">
+<div class="q-head"><span class="q-tag" id="qTag"></span><span class="q-hearts" id="qHearts" aria-label="Leben"></span></div>
+<p class="q-text" id="qText"></p>
+<div id="qTable"></div>
+<div class="answers" id="qAnswers"></div>
+<div class="feedback" id="qFeedback" hidden></div>
+<div class="btnrow"><button class="btn" id="qNext" hidden>Weiter ⏎</button></div>
+</div>
+</div>
+<div class="overlay" id="ovEgg" hidden>
+<div class="egg" role="dialog" aria-modal="true" aria-label="Geheimer Block">
+<div class="ribbon"><span>Schön, dass du dieses Spiel spielst. Ich hoffe es gefällt dir!</span></div>
+<p class="egg-sub">★ Geheimen Block gefunden · +500 Punkte ★</p>
+<button class="btn" id="eggOk" type="button">Weiter ⏎</button>
+</div>
+</div>
+<div class="overlay" id="ovMsg" hidden>
+<div class="card" id="msgCard"></div>
+</div>
+</div>
+<section class="help">
+<div>
+<h2>STEUERUNG</h2>
+<kbd>◀</kbd> <kbd>▶</kbd> oder <kbd>A</kbd> <kbd>D</kbd> laufen · <kbd>LEER</kbd>, <kbd>▲</kbd> oder <kbd>W</kbd> springen · <kbd>SHIFT</kbd> rennen · <kbd>F</kbd> oder <kbd>X</kbd> schiessen · <kbd>P</kbd> Pause<br><b>Handy &amp; Tablet:</b> links den Finger auf ◀ ▶ legen und hin- und herschieben (ganz aussen = rennen), rechts <b>▲</b> springen und <b>✦</b> schiessen, oben <b>⛶</b> Vollbild und <b>II</b> Pause.
+</div>
+<div>
+<h2>AUFGABEN</h2>
+Antworten mit Klick oder den Tasten <kbd>1</kbd>–<kbd>4</kbd>. Eine falsche Antwort kostet ein Herz, dafür siehst du den Rechenweg. Eine richtige Antwort schenkt dir ein Herz zurück.
+</div>
+<div>
+<h2>GEGNER</h2>
+Fehlerteufel besiegst du von oben oder mit einem Schuss. Fressblumen im Topf schnappen zu, wenn du zu nah kommst: abschiessen! Feuerbällen aus Lava und Feuerspuckern musst du ausweichen. Sandige Bröckelsteine zerfallen kurz nachdem du darauf stehst.
+</div>
+<div>
+<h2>POWER-UPS</h2>
+Wer eine Aufgabe beim <b>ersten Versuch</b> richtig löst, gewinnt ein Power-up: <b>Stern</b> (10 s unbesiegbar), <b>Jetpack</b> (10 s fliegen, Sprungtaste halten), <b>Dreifach-Schuss</b> (15 s) oder <b>Münz-Magnet</b> (15 s).
+</div>
+</section>
+<footer><button class="print" id="btnPrint" type="button">Lernprotokoll als PDF drucken (A4)</button></footer>
+</div>
+<div id="printArea"></div>
+<script src="game.js"></script>
+</body>
+</html>
